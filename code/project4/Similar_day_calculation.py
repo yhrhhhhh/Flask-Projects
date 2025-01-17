@@ -48,70 +48,149 @@ def fetch_data(url, data):
 def fetch_history_data(url, data):
     compare_data_list = {}
 
+    # 获取数据
     result = fetch_data(url, data)
+    print(len(result))
     if result:
-        compare_data_list["out_temp"] = result[0]["values"]
-        compare_data_list["run_status"] = result[1]["values"]
-        compare_data_list["air_supply_temp"] = result[2]["values"]
-        compare_data_list["water_inlet_temp"] = result[3]["values"]
-        compare_data_list["cooling_capacity_kwh"] = result[4]["values"]
-        compare_data_list["energy_consumption_kwh"] = result[5]["values"]
+        try:
+            # 定义变量与 result 索引的映射
+            variables = {
+                "out_temp": "JiFang1/SimilarDay/OUT_T",
+                "JiFang9_BHSB_EC1_Run":"JiFang9/BHSB_EC1/Run",
+                "JiFang9_BHSB_EC2_Run": "JiFang9/BHSB_EC2/Run",
+                "JiFang9_BHSB_EC3_Run": "JiFang9/BHSB_EC3/Run",
+                "JiFang9_BHSB_EC4_Run": "JiFang9/BHSB_EC4/Run",
+                "JiFang30_BHSB_EC1_Run": "JiFang30/BHSB_EC1/Run",
+                "JiFang30_BHSB_EC2_Run": "JiFang30/BHSB_EC2/Run",
+                "JiFang30_BHSB_EC3_Run": "JiFang30/BHSB_EC3/Run",
+                "air_supply_temp": "JiFang1/SimilarDay/LDGS_T",
+                "water_inlet_temp": "JiFang1/SimilarDay/LQHS_T",
+                "cooling_capacity_kwh": "JiFang1/LenLiangZ",
+                "energy_consumption_kwh": "JiFang1/XTZ_KWH",
+                "cooling_price":"JiFang1/LL_Price"
+            }
 
-        compare_data_list = validate_data_in_range(compare_data_list)
+            # 遍历变量字典，逐一赋值
+            for index_data in result:
+                for key, value in variables.items():
+                    if value == index_data['tagName'] and len(index_data['values'])>0:
+                        compare_data_list[key] = index_data["values"]
+            for key ,value in variables.items():
+                if key not in compare_data_list:
+                    compare_data_list[key] = []
+                    for i in result[0]['values']:
+                        compare_data_list[key].append({'t':i['t'],'v':0,'s':1})
+            # 验证数据范围
+            compare_data_list = validate_data_in_range(compare_data_list)
 
-        start_time = data['start']
-        end_time = data['end']
+            # 获取时间范围并生成日期列表
+            start_time = data.get('start')
+            end_time = data.get('end')
 
-        start = datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")
-        end = datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S")
+            if not start_time or not end_time:
+                raise Exception("Missing 'start' or 'end' in input data.")
 
-        date_list = []
-        current_date = start
-        while current_date <= end:
-            date_list.append(current_date.strftime("%Y-%m-%d"))
-            current_date += timedelta(days=1)
+            try:
+                start = datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")
+                end = datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S")
+            except ValueError as e:
+                raise Exception(f"Invalid date format for 'start' or 'end': {e}")
 
-        compare_data_list["time_list"] = date_list
-        return compare_data_list
+            date_list = []
+            current_date = start
+            while current_date <= end:
+                date_list.append(current_date.strftime("%Y-%m-%d"))
+                current_date += timedelta(days=1)
+
+            compare_data_list["time_list"] = date_list
+            return compare_data_list
+
+        except Exception as e:
+            print(f"Error processing data: {e}")
+            raise  # 向外层抛出异常以供进一步处理
     else:
         raise Exception("数据获取失败")
 
+
 def fetch_history_data2(url, data):
     compare_data_list = {}
-
     result = fetch_data(url, data)
+    print(len(result))
     if result:
-        compare_data_list["supply_temp"] = result[0]["values"]
-        compare_data_list["return_temp"] = result[1]["values"]
-        compare_data_list["src_in_temp"] = result[2]["values"]
-        compare_data_list["src_out_temp"] = result[3]["values"]
-        compare_data_list["out_temp"] = result[4]["values"]
-        compare_data_list["out_humidity"] = result[5]["values"]
-        compare_data_list["out_wetbulb"] = result[6]["values"]
-        compare_data_list["pump_freq"] = result[7]["values"]
-        compare_data_list["unit_data"] = result[8]["values"]
-        compare_data_list["total_power"] = result[9]["values"]
-        compare_data_list["cooling_capacity"] = result[10]["values"]
-        compare_data_list["total_energy"] = result[11]["values"]
+        try:
+            # 定义变量与 result 索引的映射
+            variables = {
+                "supply_temp": 0,
+                "return_temp": 1,
+                "src_in_temp": 2,
+                "src_out_temp": 3,
+                "out_temp": 4,
+                "out_humidity": 5,
+                "out_wetbulb": 6,
+                "FreFB1": 7,
+                "FreFB2": 8,
+                "Pump_run1": 9,
+                "Pump_run2": 10,
+                "ZLJ1_COP": 11,
+                "ZLJ2_COP": 12,
+                "ZLJ1_SSLengLiang": 13,
+                "ZLJ2_SSLengLiang": 14,
+                "ZLJ1_KW": 15,
+                "ZLJ2_KW": 16,
+                "ZLJ_Now_Load1": 17,
+                "ZLJ_Now_Load2": 18,
+                "total_power": 19,
+                "cooling_capacity": 20,
+                "total_energy": 21,
+                "cooling_price": 22,
+            }
 
-        compare_data_list = validate_data_in_range2(compare_data_list)
+            # 遍历变量字典，逐一赋值
+            for key, index in variables.items():
+                try:
+                    compare_data_list[key] = result[index]["values"]
+                except (IndexError, KeyError) as e:
+                    print(f"Warning: Missing or invalid data for '{key}': {e}")
+                    compare_data_list[key] = []  # 设置默认值为空列表
 
-        return compare_data_list
+            # 验证数据范围
+            compare_data_list = validate_data_in_range2(compare_data_list)
+
+            return compare_data_list
+
+        except Exception as e:
+            print(f"Error while processing result data: {e}")
+            return {}
+    else:
+        raise Exception("数据获取失败")
+
+
+def fetch_history_data3(url, data):
+    compare_data_list = {}
+    result = fetch_data(url, data)
+    print(result)
+    print(len(result))
+    if result:
+        try:
+            compare_data_list["cooling_capacity"] = result[0]["values"]
+            # 验证数据范围
+            compare_data_list['cooling_capacity'] = validate_value(compare_data_list.get('cooling_capacity', 0), VALID_COOLING_CAPACITY_RANGE)
+            return compare_data_list
+        except Exception as e:
+            print(f"Error while processing result data: {e}")
+            return {}
     else:
         raise Exception("数据获取失败")
 
 # ========== 2. 数据验证与处理 ==========
-
+def validate_value(data_list, valid_range):
+    for data in data_list:
+        if data['v'] < valid_range[0]:
+            data['v'] = valid_range[0]  # 返回最小有效值
+        elif data['v'] > valid_range[1]:
+            data['v'] = valid_range[1]  # 返回最大有效值
+    return data_list
 def validate_data_in_range(data_list):
-    # 定义有效范围检查
-    def validate_value(data_list, valid_range):
-        for data in data_list:
-            if data['v'] < valid_range[0]:
-                data['v'] = valid_range[0]  # 返回最小有效值
-            elif data['v'] > valid_range[1]:
-                data['v'] = valid_range[1]  # 返回最大有效值
-        return data_list
-
     # 对每个数据进行验证和处理
     data_list['out_temp'] = validate_value(data_list['out_temp'], OUT_TEMP)
     data_list['air_supply_temp'] = validate_value(data_list['air_supply_temp'], AIR_SUPPLY_TEMP)
@@ -122,15 +201,6 @@ def validate_data_in_range(data_list):
     return data_list
 
 def validate_data_in_range2(data_list):
-    # 定义有效范围检查
-    def validate_value(data_list, valid_range):
-        for data in data_list:
-            if data['v'] < valid_range[0]:
-                data['v'] = valid_range[0]  # 返回最小有效值
-            elif data['v'] > valid_range[1]:
-                data['v'] = valid_range[1]  # 返回最大有效值
-        return data_list
-
     # 对每个数据进行验证和处理
     data_list['supply_temp'] = validate_value(data_list.get('supply_temp', 0), VALID_SUPPLY_TEMP_RANGE)
     data_list['return_temp'] = validate_value(data_list.get('return_temp', 0), VALID_RETURN_TEMP_RANGE)
@@ -139,8 +209,16 @@ def validate_data_in_range2(data_list):
     data_list['out_temp'] = validate_value(data_list.get('out_temp', 0), VALID_OUT_TEMP_RANGE)
     data_list['out_humidity'] = validate_value(data_list.get('out_humidity', 0), VALID_OUT_HUMIDITY_RANGE)
     data_list['out_wetbulb'] = validate_value(data_list.get('out_wetbulb', 0), VALID_OUT_WETBULB_RANGE)
-    data_list['pump_freq'] = validate_value(data_list.get('pump_freq', 0), VALID_PUMP_FREQ_RANGE)
-    data_list['unit_data'] = validate_value(data_list.get('unit_data', 0), VALID_UNIT_DATA_RANGE)
+    data_list['FreFB1'] = validate_value(data_list.get('FreFB1', 0), VALID_PUMP_FREQ_RANGE)
+    data_list['FreFB2'] = validate_value(data_list.get('FreFB2', 0), VALID_PUMP_FREQ_RANGE)
+    data_list['ZLJ1_COP'] = validate_value(data_list.get('ZLJ1_COP', 0), VALID_UNIT_DATA_RANGE)
+    data_list['ZLJ2_COP'] = validate_value(data_list.get('ZLJ2_COP', 0), VALID_UNIT_DATA_RANGE)
+    data_list['ZLJ1_SSLengLiang'] = validate_value(data_list.get('ZLJ1_SSLengLiang', 0), VALID_UNIT_DATA_RANGE)
+    data_list['ZLJ2_SSLengLiang'] = validate_value(data_list.get('ZLJ2_SSLengLiang', 0), VALID_UNIT_DATA_RANGE)
+    data_list['ZLJ1_KW'] = validate_value(data_list.get('ZLJ1_KW', 0), VALID_UNIT_DATA_RANGE)
+    data_list['ZLJ2_KW'] = validate_value(data_list.get('ZLJ2_KW', 0), VALID_UNIT_DATA_RANGE)
+    data_list['ZLJ_Now_Load1'] = validate_value(data_list.get('ZLJ_Now_Load1', 0), VALID_UNIT_DATA_RANGE)
+    data_list['ZLJ_Now_Load2'] = validate_value(data_list.get('ZLJ_Now_Load2', 0), VALID_UNIT_DATA_RANGE)
     data_list['total_power'] = validate_value(data_list.get('total_power', 0), VALID_TOTAL_POWER_RANGE)
     data_list['cooling_capacity'] = validate_value(data_list.get('cooling_capacity', 0), VALID_COOLING_CAPACITY_RANGE)
     data_list['total_energy'] = validate_value(data_list.get('total_energy', 0), VALID_TOTAL_ENERGY_RANGE)
@@ -298,7 +376,6 @@ def query_work_rest_status(dates):
                 status_list[str(row[0])] = True
             else:
                 status_list[str(row[0])] = False
-        print(status_list)
         return status_list
 
     except Exception as e:
@@ -359,38 +436,101 @@ def calculate_daily_difference(start_time, end_time, records):
     else:
         raise ValueError("记录为空或未找到任何时间点的值")
 
-def calculate_running_duration(start_time, end_time, records):
-    """
-    计算在指定时间范围内的运行时长。
-    规则：如果记录中时间间隔两边的数据值都为 1，则认为该时间段内都在运行。
-
-    返回：
-        运行时长（单位：秒）
-    """
-    records = sorted(records, key=lambda x: datetime.strptime(x["t"], "%Y-%m-%d %H:%M:%S"))
-    running_duration = 0
-    previous_record = None
-
+def calculate_daily_cooling_price(start_time, end_time, records):
     for record in records:
         record_time = datetime.strptime(record["t"], "%Y-%m-%d %H:%M:%S")
+        # 找最接近 start_time 的值
+        if record_time < start_time or record_time > end_time:
+            continue
+        return record["v"]
 
-        # 跳过不在范围内的记录
+def Altitude_mode_running_time(start_time, end_time, compare_data_list):
+    """
+    计算满足条件的运行时长。
+    条件：
+        1. (JiFang9_BHSB_EC1_Run | JiFang9_BHSB_EC2_Run) |
+           (JiFang30_BHSB_EC1_Run & JiFang30_BHSB_EC2_Run & JiFang30_BHSB_EC3_Run)
+        2. (!JiFang9_BHSB_EC3_Run | !JiFang9_BHSB_EC4_Run) |
+           (!JiFang30_BHSB_EC1_Run & !JiFang30_BHSB_EC2_Run & !JiFang30_BHSB_EC3_Run)
+    返回：
+        字典形式的时长统计结果，包含两组条件的运行时长（单位：秒）。
+    """
+    # 初始化运行时长
+    condition_1_duration = 0
+    condition_2_duration = 0
+
+    # 对齐数据按时间排序
+    zipped_data = zip(
+        compare_data_list['JiFang9_BHSB_EC1_Run'],
+        compare_data_list['JiFang9_BHSB_EC2_Run'],
+        compare_data_list['JiFang9_BHSB_EC3_Run'],
+        compare_data_list['JiFang9_BHSB_EC4_Run'],
+        compare_data_list['JiFang30_BHSB_EC1_Run'],
+        compare_data_list['JiFang30_BHSB_EC2_Run'],
+        compare_data_list['JiFang30_BHSB_EC3_Run'],
+    )
+    previous_record = None
+
+    for JiFang9_EC1, JiFang9_EC2, JiFang9_EC3, JiFang9_EC4, JiFang30_EC1, JiFang30_EC2, JiFang30_EC3 in zipped_data:
+        # 获取当前时间戳
+        times = [
+            JiFang9_EC1["t"],
+            JiFang9_EC2["t"],
+            JiFang9_EC3["t"],
+            JiFang9_EC4["t"],
+            JiFang30_EC1["t"],
+            JiFang30_EC2["t"],
+            JiFang30_EC3["t"],
+        ]
+
+        # 确保所有时间一致
+        if len(set(times)) != 1:
+            continue  # 跳过时间不一致的记录
+
+        record_time = datetime.strptime(times[0], "%Y-%m-%d %H:%M:%S")
+
+        # 跳过不在时间范围内的数据
         if record_time < start_time or record_time > end_time:
             continue
 
-        if previous_record is not None:
+        # 如果存在前一条记录，计算时间差
+        if previous_record:
             prev_time = datetime.strptime(previous_record["t"], "%Y-%m-%d %H:%M:%S")
-            prev_status = previous_record["s"]
-            current_status = record["s"]
+            time_delta = (record_time - prev_time).total_seconds()
 
-            # 如果时间段两边的状态值都为 1，则累加时间间隔
-            if prev_status == 1 and current_status == 1:
-                running_duration += (record_time - prev_time).total_seconds()
+            # 获取状态值
+            JiFang9_EC1_status = JiFang9_EC1["s"]
+            JiFang9_EC2_status = JiFang9_EC2["s"]
+            JiFang9_EC3_status = JiFang9_EC3["s"]
+            JiFang9_EC4_status = JiFang9_EC4["s"]
+            JiFang30_EC1_status = JiFang30_EC1["s"]
+            JiFang30_EC2_status = JiFang30_EC2["s"]
+            JiFang30_EC3_status = JiFang30_EC3["s"]
 
-        # 更新前一个记录为当前记录
-        previous_record = record
+            # 条件 1 判断
+            condition_1 = (
+                    (JiFang9_EC1_status != 0 or JiFang9_EC2_status != 0) or
+                    (JiFang30_EC1_status != 0 and JiFang30_EC2_status != 0 and JiFang30_EC3_status != 0)
+            )
+            if condition_1:
+                condition_1_duration += time_delta
 
-    return running_duration
+            # 条件 2 判断
+            condition_2 = (
+                    (JiFang9_EC3_status == 0 or JiFang9_EC4_status == 0) or
+                    (JiFang30_EC1_status == 0 and JiFang30_EC2_status == 0 and JiFang30_EC3_status == 0)
+            )
+            if condition_2:
+                condition_2_duration += time_delta
+
+        # 更新前一条记录
+        previous_record = JiFang9_EC1  # 以 JiFang9_BHSB_EC1_Run 为基准记录时间
+
+    # 返回结果
+    return {
+        "Day_RunTime": condition_1_duration,
+        "Night_RunTime": condition_2_duration,
+    }
 
 def Related_attribute_value_calculation(compare_data_list,top_similar_dates):
     results = []
@@ -414,10 +554,9 @@ def Related_attribute_value_calculation(compare_data_list,top_similar_dates):
         cooling_capacity_kwh = calculate_daily_difference(start_time, end_time, compare_data_list['cooling_capacity_kwh'])
         energy_consumption_kwh = calculate_daily_difference(start_time, end_time,compare_data_list['energy_consumption_kwh'])
 
-        peak_mode_duration = calculate_running_duration(daytime_start_time, daytime_end_time, compare_data_list['run_status'])
-        night_mode_duration_one = calculate_running_duration(current_date, daytime_start_time, compare_data_list['run_status'])
-        night_mode_duration_two = calculate_running_duration(daytime_end_time, end_time, compare_data_list['run_status'])
+        peak_mode_duration = Altitude_mode_running_time(start_time, end_time, compare_data_list)
 
+        cooling_price = calculate_daily_cooling_price(start_time, end_time, compare_data_list['cooling_price'])
 
         # 添加到结果中
         results.append({
@@ -427,12 +566,13 @@ def Related_attribute_value_calculation(compare_data_list,top_similar_dates):
             "max_temp": max_temp,
             "daytime_avg_temp": daytime_avg_temp,
             "nighttime_avg_temp": nighttime_avg_temp_one + nighttime_avg_temp_two,
-            "peak_mode_duration": peak_mode_duration,
-            "night_mode_duration": night_mode_duration_one+night_mode_duration_two,
+            "peak_mode_duration": peak_mode_duration['Day_RunTime'],
+            "night_mode_duration": peak_mode_duration['Night_RunTime'],
             "air_supply_temp": air_supply_temp,
             "water_inlet_temp": water_inlet_temp,
             "cooling_capacity_kwh": cooling_capacity_kwh,
             "energy_consumption_kwh": energy_consumption_kwh,
+            "cooling_price" :cooling_price
         })
 
     return results
@@ -449,7 +589,62 @@ def Integrated_time_dictionary(data_list):
             date = entry['t'][:10]
             date_time = entry['t']  # 提取日期部分
             grouped[date][date_time][key] = entry['v']
+
+    for key, values in grouped.items():
+        for time,properties_values in values.items():
+            if properties_values['Pump_run1'] ==1 and properties_values['Pump_run2'] ==1:
+                properties_values['pump_freq'] = (properties_values['FreFB1'] + properties_values['FreFB2'])/2
+            elif properties_values['Pump_run1'] ==1:
+                properties_values['pump_freq'] = (properties_values['FreFB1'])
+            elif properties_values['Pump_run2'] ==1:
+                properties_values['pump_freq'] = (properties_values['FreFB2'])
+            else:
+                properties_values['pump_freq'] = 0
+
     return grouped
+
+def predict_remaining_cooling(compare_data_list, today_data_dict, current_time):
+    """
+    根据相似日冷量曲线预测今天剩余时间的冷量曲线。
+
+    参数:
+        compare_data_list (dict): 相似日数据字典，包含 'time_list' 和 'cooling_capacity'。
+        today_data_dict (dict): 今日数据字典，包含 'time_list' 和 'cooling_capacity'。
+        current_time (datetime): 当前时刻，用于区分今日已过去时间和剩余时间。
+    返回:
+        list: 今日剩余时间的冷量曲线预测值。
+    """
+    today_data = sorted(today_data_dict["cooling_capacity"], key=lambda x: x["t"])
+    similar_day_data = sorted(compare_data_list["cooling_capacity"], key=lambda x: x["t"])
+    predicted_today_data = []
+    difference = 0
+
+    for today_point,similar_point in zip(today_data,similar_day_data):
+        today_time = datetime.strptime(today_point["t"].split(" ")[1], "%H:%M:%S")
+        if today_time <= current_time:
+            predicted_today_data.append({"t": today_point["t"], "v": today_point["v"]})
+
+        difference += similar_point["v"] - today_point["v"]
+
+    difference = round(difference/len(today_data),2)
+
+    for i,similar_point in enumerate(similar_day_data):
+        similar_time = similar_point["t"].split(" ")[1]
+        formatted_current_time = str(current_time.strftime("%Y-%m-%d %H:%M:%S")).split(" ")[1]
+        # 当前时间之前的数据保持不变
+        if similar_time <= formatted_current_time:
+            continue
+
+        current_similar_value = similar_point["v"]
+        if difference > 0:
+            predicted_value = current_similar_value - difference
+        else:
+            predicted_value = current_similar_value + difference
+
+        predicted_today_data.append({"t": similar_point["t"], "v": predicted_value})
+
+    return predicted_today_data
+
 
 # ========== 6. 主逻辑(相似日工况报表) ==========
 @app.route("/similar_day_calculation", methods=['POST'])
@@ -499,6 +694,26 @@ def Similar_daily_operating_conditions_curve():
         for time in similar_dates:
             res_values[time] = compare_data[time]
 
+    except Exception as e:
+        print(e)
+        return jsonify({"status": "error", "message": str(e)}), 400
+
+    return jsonify(res_values), 200
+
+# ========== 8. 主逻辑(负荷预测 ) ==========
+@app.route("/Load_forecasting", methods=['POST'])
+def Load_forecasting():
+    # 获取历史数据
+    try:
+        now = datetime.now()
+        request_data = request.json
+        url = request_data['url']  # 获取 URL
+        data_compare = request_data['similar_data']  # 获取 data_compare
+        data = request_data['data']  # 获取 data
+        compare_data_list = fetch_history_data3(url, data_compare)
+        today_data_dict = fetch_history_data3(url, data)
+
+        res_values = predict_remaining_cooling(compare_data_list, today_data_dict,now)
     except Exception as e:
         print(e)
         return jsonify({"status": "error", "message": str(e)}), 400
