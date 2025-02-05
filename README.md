@@ -2,7 +2,7 @@
 
 ### 说明文档：Flask API 应用
 
-###(一)Based on flask framework related projects
+###(一)project1:Verify the incoming data format and time incrementability && Calculate accumulated time based on incoming data
 
 #### 项目概述：
 
@@ -173,7 +173,197 @@
 - **时间递增性校验失败**：如果时间列表中的时间不严格递增，抛出 `ValueError` 并返回错误信息。
 
 
-project1:Verify the incoming data format and time incrementability.
-Calculate accumulated time based on incoming data
-project2:Trained SVR model predicts COP values
-project3:List of work leave status
+###(二)project2:Trained SVR model predicts COP values
+## 基本信息
+
+- **服务地址**: `http://127.0.0.1:1820/`
+- **支持的请求类型**: `POST`
+- **跨域支持**: 是 (`CORS`)
+
+------
+
+## 接口 1: `/select_cop`
+
+### 功能
+
+根据输入的负荷率（`load_level`）、冷却水温度（`temperature`）和冷冻水温度（`frozen_temp`），使用已训练的 SVR 模型预测 COP 值。如果输入数据超出合理范围，则返回错误响应。
+
+### 请求方式
+
+```
+POST
+```
+
+### 请求参数
+
+请求体应包含以下 JSON 格式的数据：
+
+```json
+{
+    "load_level": <float>,      // 负荷率（百分比，0-100）
+    "temperature": <float>,     // 冷却水温度（摄氏度，0-15）
+    "frozen_temp": <float>      // 冷冻水温度（摄氏度，-10到10）
+}
+```
+
+### 响应
+
+- **成功响应（200 OK）**:
+
+  ```json
+  {
+      "predicted_cop": <float>   // 预测的 COP 值
+  }
+  ```
+
+- **错误响应（400 Bad Request）**:
+
+  ```json
+  {
+      "status": "error",
+      "message": "<错误信息>"
+  }
+  ```
+
+### 示例
+
+#### 请求示例
+
+```bash
+curl -X POST http://127.0.0.1:1820/select_cop -H "Content-Type: application/json" -d '{
+    "load_level": 85,
+    "temperature": 12,
+    "frozen_temp": 5
+}'
+```
+
+#### 响应示例
+
+```json
+{
+    "predicted_cop": 3.8
+}
+```
+
+------
+
+## 接口 2: `/train_cop_model`
+
+### 功能
+
+从指定的 URL 获取历史数据，根据这些数据训练 COP 模型，保存训练后的模型并进行可视化。
+
+### 请求方式
+
+```
+POST
+```
+
+### 请求参数
+
+请求体应包含以下 JSON 格式的数据：
+
+```json
+{
+    "url": <string>,             // 历史数据 API 的 URL
+    "data": {"load_level": "JIFANG/JIFANG/JF_COP"
+	"start": "2024-07-30 00:00:00", 
+    "end": "2024-07-30 20:00:00",
+    "second": "60"}
+}
+```
+
+### 响应
+
+- **成功响应（200 OK）**:
+
+  ```json
+  {
+      "status": "success",
+      "message": "模型训练完成并保存"
+  }
+  ```
+
+- **错误响应（400 Bad Request）**:
+
+  ```json
+  {
+      "status": "error",
+      "message": "<错误信息>"
+  }
+  ```
+
+### 示例
+
+#### 请求示例
+
+```bash
+curl -X POST http://127.0.0.1:1820/train_cop_model -H "Content-Type: application/json" -d '{
+    "url": "http://example.com/data",
+    "data": {
+        "param1": "value1",
+        "param2": "value2"
+    }
+}'
+```
+
+#### 响应示例
+
+```json
+{
+    "status": "success",
+    "message": "模型训练完成并保存"
+}
+```
+
+------
+
+## 错误处理
+
+### 常见错误代码
+
+- **400 Bad Request**: 请求的数据不符合预期或缺少必要的字段。
+- **500 Internal Server Error**: 服务器内部错误，通常是代码或数据问题。
+
+------
+
+## 数据范围说明
+
+以下是接口中涉及到的数据范围，所有输入数据必须在这些范围内，否则会返回错误响应。
+
+- **负荷率 (load_level)**: 0% 到 100%。
+- **冷却水温度 (temperature)**: 0°C 到 15°C。
+- **冷冻水温度 (frozen_temp)**: -10°C 到 10°C。
+- **COP (cop_data)**: 2.0 到 6.0。
+
+------
+
+## 定时任务说明
+
+该应用使用 `schedule` 库执行定时任务，每小时更新缓存中的 COP 历史数据。
+
+------
+
+## 模型说明
+
+使用 **SVR (支持向量回归)** 模型进行 COP 预测，模型的参数如下：
+
+- `C = 30`
+- `gamma = 0.01`
+
+训练的数据包括：
+
+- **负荷率**
+- **冷却水温度**
+- **冷冻水温度**
+- **COP 值**
+
+模型训练完成后，使用已训练的模型进行 COP 预测。
+
+------
+
+## 可视化
+
+训练和优化后的 COP 模型会进行 3D 曲面图可视化，帮助展示 COP 的变化情况。
+
+###（三）project3:List of work leave status
