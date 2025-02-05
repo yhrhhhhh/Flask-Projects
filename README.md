@@ -2,7 +2,7 @@
 
 ### 说明文档：Flask API 应用
 
-###(一)project1:Verify the incoming data format and time incrementability && Calculate accumulated time based on incoming data
+### (一)project1:Verify the incoming data format and time incrementability && Calculate accumulated time based on incoming data
 
 #### 项目概述：
 
@@ -172,8 +172,8 @@
 - **空数据校验失败**：在 `values` 列表为空时，抛出 `ValueError` 并返回错误信息。
 - **时间递增性校验失败**：如果时间列表中的时间不严格递增，抛出 `ValueError` 并返回错误信息。
 
-
-###(二)project2:Trained SVR model predicts COP values
+---------------------------------------------------------------------------------------------------------------------------------------------
+### (二)project2:Trained SVR model predicts COP values
 ## 基本信息
 
 - **服务地址**: `http://127.0.0.1:1820/`
@@ -366,7 +366,9 @@ curl -X POST http://127.0.0.1:1820/train_cop_model -H "Content-Type: application
 
 训练和优化后的 COP 模型会进行 3D 曲面图可视化，帮助展示 COP 的变化情况。
 
-###（三）project3:List of work leave status
+----------------------------------------------------------------------------------------------------------------------------------------
+
+### （三）project3:List of work leave status
 
 
 ------
